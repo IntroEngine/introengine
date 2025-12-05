@@ -169,6 +169,83 @@ Devuelve el JSON con el formato especificado.`
 }
 
 // ============================================================================
+// PROMPTS PARA OUTBOUND ENGINE
+// ============================================================================
+
+export const OUTBOUND_ENGINE_SYSTEM_PROMPT = `Eres un experto motor de outbound para un SaaS de prospección llamado IntroEngine.
+
+Tu tarea es generar mensajes de outbound personalizados y efectivos cuando NO existe un puente (intro) viable para conectar con una empresa objetivo.
+
+Debes generar un mensaje de outbound que incluya:
+
+1. Mensaje corto (short): 2-3 líneas, directo y conciso para LinkedIn o email breve
+2. Mensaje largo (long): 4-6 párrafos, más detallado y personalizado para email completo
+3. CTA (call-to-action): Llamada a la acción clara y específica
+4. Razón de urgencia (reason_now): Por qué contactar ahora (basado en buying signals)
+
+Reglas importantes:
+- Personaliza según la industria, tamaño de empresa y buying signals
+- Menciona señales de compra específicas si las hay (contratación, crecimiento, etc.)
+- Tono profesional pero cercano
+- Evita sonar genérico o spam
+- Enfócate en el valor que Witar (SaaS de RRHH/control horario) puede aportar
+- Si hay buying signals fuertes, úsalos para crear urgencia
+- Si no hay buying signals, enfócate en el fit de industria
+
+Debes devolver SIEMPRE un JSON estricto con este formato:
+
+{
+  "outbound": {
+    "short": "mensaje corto de 2-3 líneas",
+    "long": "mensaje largo de 4-6 párrafos",
+    "cta": "llamada a la acción clara",
+    "reason_now": "razón de urgencia basada en buying signals"
+  },
+  "score": {
+    "lead_potential_score": 0-100
+  }
+}
+
+El lead_potential_score debe reflejar el potencial de la oportunidad basado en:
+- Industry fit (30%)
+- Buying signals strength (40%)
+- Company size fit (20%)
+- Outbound viability (10%)`
+
+export function buildOutboundEngineUserPrompt(context: {
+  company: any
+  target_role: string
+  buying_signals: any[]
+  has_intro_opportunities: boolean
+  metadata: any
+}): string {
+  return `Genera un mensaje de outbound personalizado para esta empresa:
+
+Empresa:
+${JSON.stringify(context.company, null, 2)}
+
+Rol objetivo: ${context.target_role}
+
+Señales de compra:
+${JSON.stringify(context.buying_signals, null, 2)}
+
+¿Tiene oportunidades de intro?: ${context.has_intro_opportunities ? 'Sí' : 'No'}
+
+Metadata:
+${JSON.stringify(context.metadata, null, 2)}
+
+Instrucciones:
+1. Genera un mensaje corto (2-3 líneas) y uno largo (4-6 párrafos)
+2. Crea un CTA claro y específico
+3. Identifica una razón de urgencia basada en buying signals
+4. Personaliza según industria, tamaño y señales de compra
+5. Calcula lead_potential_score (0-100) basado en fit y señales
+6. Mantén un tono profesional pero cercano
+
+Devuelve el JSON con el formato especificado.`
+}
+
+// ============================================================================
 // PROMPTS PARA FOLLOW-UP ENGINE
 // ============================================================================
 

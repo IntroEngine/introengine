@@ -387,17 +387,19 @@ function buildRelationshipContext(
 async function callRelationshipEngineAI(
   context: RelationshipContext
 ): Promise<IntroOpportunitiesAIResponse> {
-  // TODO: Importar y usar el helper real cuando esté implementado
-  // import { callRelationshipEngineAI as callOpenAI } from './ai/openai-helper'
-  // return await callOpenAI(context)
-  
   try {
-    // Por ahora, usar implementación temporal
-    // Esto debe ser reemplazado con la llamada real a OpenAI
-    console.warn('TODO: Implementar llamada real a OpenAI usando services/ai/openai-helper')
+    // Importar y usar el helper real de OpenAI
+    const { callRelationshipEngineAI as callOpenAI } = await import('./ai/openai-helper')
     
-    // Retornar estructura vacía temporalmente
-    return { opportunities: [] }
+    // Convertir el contexto local al formato esperado por el helper
+    const helperContext = {
+      company: context.company,
+      bridge_contacts: context.bridge_contacts,
+      target_candidates: context.target_candidates,
+      known_relationships: context.known_relationships
+    }
+    
+    return await callOpenAI(helperContext)
   } catch (error) {
     console.error('Error calling OpenAI for relationship analysis:', error)
     throw error
@@ -637,6 +639,25 @@ async function upsertIntroOpportunitiesFromAI(
         updated++
       } else {
         created++
+        // Registrar creación de oportunidad en activity logs
+        try {
+          const { logOpportunityCreated } = await import('./activityLogger')
+          await logOpportunityCreated(
+            accountId,
+            opportunityId,
+            'intro',
+            opportunity.company_id,
+            opportunity.target.id,
+            opportunity.best_route.bridge_contact?.id,
+            {
+              confidence: opportunity.best_route.confidence,
+              route_type: opportunity.best_route.type
+            }
+          )
+        } catch (logError) {
+          // No fallar si el logging falla
+          console.warn(`Failed to log opportunity creation:`, logError)
+        }
       }
       
       // Upsert score

@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/config/supabase'
-
-// TODO: Obtener account_id desde el token de autenticación en lugar de hardcodearlo
-// Para MVP, usar un account_id fijo
-const ACCOUNT_ID = '00000000-0000-0000-0000-000000000000' // TODO: Reemplazar con account_id real desde auth
+import { getAccountId } from '@/lib/auth'
 
 // Tipo para la respuesta de Company
 type CompanyDTO = {
@@ -52,13 +49,23 @@ function getSupabaseClient() {
 // GET /api/companies
 export async function GET(req: Request) {
   try {
+    // Obtener account_id del usuario autenticado
+    const accountId = await getAccountId()
+    
+    if (!accountId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const supabase = getSupabaseClient()
 
     // Consultar empresas del account actual
     const { data, error } = await supabase
       .from('companies')
       .select('id, name, website, domain, industry, size_bucket, status')
-      .eq('account_id', ACCOUNT_ID)
+      .eq('account_id', accountId)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -93,6 +100,16 @@ export async function GET(req: Request) {
 // POST /api/companies
 export async function POST(req: Request) {
   try {
+    // Obtener account_id del usuario autenticado
+    const accountId = await getAccountId()
+    
+    if (!accountId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const body = await req.json()
     const { name, website, industry, size_bucket, status } = body
 
@@ -116,7 +133,7 @@ export async function POST(req: Request) {
     const { data, error } = await supabase
       .from('companies')
       .insert({
-        account_id: ACCOUNT_ID,
+        account_id: accountId,
         name: name.trim(),
         website: website?.trim() || null,
         domain: domain,

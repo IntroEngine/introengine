@@ -1,7 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js'
 
-// TODO: Configurar variables de entorno
-// Estas variables deben estar en .env.local:
+// Variables de entorno configuradas en .env.local:
 // NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 // NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
@@ -12,11 +11,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase credentials not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local')
 }
 
-export function createClient() {
+/**
+ * Crea un cliente de Supabase configurado
+ * Funciona tanto en cliente como en servidor
+ * @returns Cliente de Supabase
+ */
+export function createClient(): SupabaseClient {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Supabase credentials not configured')
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey)
+  return createSupabaseClient(supabaseUrl, supabaseAnonKey)
 }
 

@@ -1,7 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useTheme } from 'next-themes'
+import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 
 interface TopbarProps {
   title: string
@@ -14,9 +16,14 @@ interface TopbarProps {
 
 const Topbar: React.FC<TopbarProps> = ({ title, user }) => {
   const { theme, setTheme } = useTheme()
+  const { signOut } = useAuth()
+  const router = useRouter()
+  const [showMenu, setShowMenu] = useState(false)
   
-  // TODO: Implementar menú de usuario completo
-  // TODO: Conectar con datos reales del usuario desde backend
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/login')
+  }
   
   return (
     <div className="flex items-center justify-between h-16 px-6 bg-white dark:bg-gray-900">
@@ -45,28 +52,61 @@ const Topbar: React.FC<TopbarProps> = ({ title, user }) => {
         </button>
         
         {/* User section */}
-        <div className="flex items-center space-x-3">
-          {user?.avatar ? (
-            <img
-              src={user.avatar}
-              alt={user.name || 'Usuario'}
-              className="w-8 h-8 rounded-full"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm font-medium">
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
-            </div>
-          )}
-          <div className="hidden md:block">
-            <p className="text-sm font-medium text-foreground">
-              {user?.name || 'Usuario'}
-            </p>
-            {user?.email && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {user.email}
-              </p>
+        <div className="relative">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+          >
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name || 'Usuario'}
+                className="w-8 h-8 rounded-full"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm font-medium">
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </div>
             )}
-          </div>
+            <div className="hidden md:block text-left">
+              <p className="text-sm font-medium text-foreground">
+                {user?.name || 'Usuario'}
+              </p>
+              {user?.email && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {user.email}
+                </p>
+              )}
+            </div>
+            <svg
+              className="w-4 h-4 text-gray-500 dark:text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {/* Dropdown menu */}
+          {showMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setShowMenu(false)}
+              />
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-20 border border-gray-200 dark:border-gray-700">
+                <div className="py-1">
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

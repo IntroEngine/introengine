@@ -338,79 +338,20 @@ async function buildOutboundContextForCompany(
 /**
  * Llama a OpenAI para generar mensaje outbound personalizado
  * 
- * TODO: Importar prompt desde services/ai/prompts cuando esté disponible
+ * Usa el helper de OpenAI desde services/ai/openai-helper
  */
 async function callOutboundEngineAI(
   context: OutboundContext
 ): Promise<OutboundAIResponse> {
-  // TODO: Implementar llamada real a OpenAI
-  // Ejemplo de implementación esperada:
-  
-  /*
-  import OpenAI from 'openai'
-  import { OUTBOUND_ENGINE_SYSTEM_PROMPT, buildOutboundEngineUserPrompt } from './ai/prompts'
-  
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-  })
-  
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY not configured')
-  }
-  
   try {
-    const userPrompt = buildOutboundEngineUserPrompt(context)
+    // Importar y usar el helper real de OpenAI
+    const { callOutboundEngineAI as callOpenAI } = await import('./ai/openai-helper')
     
-    const response = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
-      messages: [
-        { role: 'system', content: OUTBOUND_ENGINE_SYSTEM_PROMPT },
-        { role: 'user', content: userPrompt }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-      max_tokens: 1500
-    })
-    
-    const content = response.choices[0]?.message?.content
-    if (!content) {
-      throw new Error('No response content from OpenAI')
-    }
-    
-    const parsed = JSON.parse(content)
-    
-    // Validar estructura
-    if (!parsed.outbound || !parsed.score) {
-      throw new Error('Invalid response format')
-    }
-    
-    return parsed as OutboundAIResponse
+    // El contexto ya está en el formato correcto
+    return await callOpenAI(context)
   } catch (error) {
-    console.error('OpenAI API error:', error)
+    console.error('Error calling OpenAI for outbound generation:', error)
     throw error
-  }
-  */
-  
-  // Implementación temporal (debe ser reemplazada)
-  console.warn('TODO: Implementar llamada real a OpenAI')
-  console.log('Outbound context received:', {
-    company: context.company?.name,
-    target_role: context.target_role,
-    buying_signals_count: context.buying_signals?.length,
-    has_intro_opportunities: context.has_intro_opportunities
-  })
-  
-  // Retornar estructura temporal
-  return {
-    outbound: {
-      short: '',
-      long: '',
-      cta: '',
-      reason_now: ''
-    },
-    score: {
-      lead_potential_score: 0
-    }
   }
 }
 

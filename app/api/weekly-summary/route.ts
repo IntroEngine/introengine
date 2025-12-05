@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/config/supabase'
+import { getAccountId } from '@/lib/auth'
 
 // TODO: Importar weeklyAdvisorEngine cuando esté disponible
 // import { weeklyAdvisorEngine } from '@/services/weeklyAdvisorEngine'
-
-// TODO: Obtener account_id desde el token de autenticación en lugar de hardcodearlo
-// Para MVP, usar un account_id fijo (mismo que en otros endpoints)
-const ACCOUNT_ID = '00000000-0000-0000-0000-000000000000' // TODO: Reemplazar con account_id real desde auth
 
 // Interfaces para WeeklyAdvisorResult
 interface WeeklyRawMetrics {
@@ -93,13 +90,23 @@ function parseWeeklySummaryPayload(payload: any): WeeklyAdvisorResult | null {
 // GET /api/weekly-summary
 export async function GET(req: Request) {
   try {
+    // Obtener account_id del usuario autenticado
+    const accountId = await getAccountId()
+    
+    if (!accountId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const supabase = getSupabaseClient()
 
     // Consultar el último resumen semanal generado
     const { data: activityLogs, error } = await supabase
       .from('activity_logs')
       .select('id, payload, created_at')
-      .eq('account_id', ACCOUNT_ID)
+      .eq('account_id', accountId)
       .eq('action_type', 'weekly_summary_generated')
       .order('created_at', { ascending: false })
       .limit(1)
@@ -153,14 +160,24 @@ export async function POST(req: Request) {
   try {
     const supabase = getSupabaseClient()
 
+    // Obtener account_id del usuario autenticado
+    const accountId = await getAccountId()
+    
+    if (!accountId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     // TODO: Importar y usar weeklyAdvisorEngine cuando esté disponible
-    // await weeklyAdvisorEngine.generateWeeklySummaryAndStore(ACCOUNT_ID)
+    // await weeklyAdvisorEngine.generateWeeklySummaryAndStore(accountId)
 
     // Por ahora, simular la generación o lanzar error si no está implementado
     try {
       // Intentar importar dinámicamente (fallará si no existe, pero no romperá el build)
       const { weeklyAdvisorEngine } = await import('@/services/weeklyAdvisorEngine')
-      await weeklyAdvisorEngine.generateWeeklySummaryAndStore(ACCOUNT_ID)
+      await weeklyAdvisorEngine.generateWeeklySummaryAndStore(accountId)
     } catch (importError) {
       // Si el servicio no existe, devolver error informativo
       console.warn('weeklyAdvisorEngine service not available:', importError)
@@ -177,7 +194,7 @@ export async function POST(req: Request) {
     const { data: activityLogs, error: fetchError } = await supabase
       .from('activity_logs')
       .select('id, payload, created_at')
-      .eq('account_id', ACCOUNT_ID)
+      .eq('account_id', accountId)
       .eq('action_type', 'weekly_summary_generated')
       .order('created_at', { ascending: false })
       .limit(1)

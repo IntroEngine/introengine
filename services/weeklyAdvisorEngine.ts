@@ -386,92 +386,20 @@ async function calculateWeeklyRawMetrics(
 /**
  * Llama a OpenAI para generar resumen ejecutivo e insights
  * 
- * TODO: Importar prompt desde services/ai/prompts cuando esté disponible
+ * Usa el helper de OpenAI desde services/ai/openai-helper
  */
 async function callWeeklyAdvisorAI(
   metrics: WeeklyRawMetrics
 ): Promise<WeeklyAdvisorAIResponse> {
-  // TODO: Implementar llamada real a OpenAI
-  // Ejemplo de implementación esperada:
-  
-  /*
-  import OpenAI from 'openai'
-  import { WEEKLY_ADVISOR_SYSTEM_PROMPT, buildWeeklyAdvisorUserPrompt } from './ai/prompts'
-  
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-  })
-  
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY not configured')
-  }
-  
   try {
-    const userPrompt = buildWeeklyAdvisorUserPrompt(metrics)
+    // Importar y usar el helper real de OpenAI
+    const { callWeeklyAdvisorAI as callOpenAI } = await import('./ai/openai-helper')
     
-    const response = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
-      messages: [
-        { role: 'system', content: WEEKLY_ADVISOR_SYSTEM_PROMPT },
-        { role: 'user', content: userPrompt }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-      max_tokens: 2000
-    })
-    
-    const content = response.choices[0]?.message?.content
-    if (!content) {
-      throw new Error('No response content from OpenAI')
-    }
-    
-    const parsed = JSON.parse(content)
-    
-    // Validar estructura
-    if (!parsed.summary || !parsed.insights || !parsed.recommended_actions) {
-      throw new Error('Invalid response format')
-    }
-    
-    if (!Array.isArray(parsed.insights) || !Array.isArray(parsed.recommended_actions)) {
-      throw new Error('Invalid response format: insights and recommended_actions must be arrays')
-    }
-    
-    return parsed as WeeklyAdvisorAIResponse
+    // Las métricas ya están en el formato correcto
+    return await callOpenAI(metrics)
   } catch (error) {
-    console.error('OpenAI API error:', error)
+    console.error('Error calling OpenAI for weekly advisor:', error)
     throw error
-  }
-  */
-  
-  // Implementación temporal (debe ser reemplazada)
-  console.warn('TODO: Implementar llamada real a OpenAI')
-  console.log('Weekly metrics received:', {
-    intros_generated: metrics.intros_generated,
-    intros_requested: metrics.intros_requested,
-    wins: metrics.wins,
-    losses: metrics.losses
-  })
-  
-  // Retornar estructura temporal
-  return {
-    summary: {
-      intros_generated: `${metrics.intros_generated} intros generadas`,
-      intros_requested: `${metrics.intros_requested} intros pedidas`,
-      responses: `${metrics.intro_responses} respuestas recibidas`,
-      outbound_pending: `${metrics.outbound_suggested - metrics.outbound_executed} outbound pendientes`,
-      wins: `${metrics.wins} victorias`,
-      losses: `${metrics.losses} pérdidas`
-    },
-    insights: [
-      'Insight temporal - implementar llamada a OpenAI',
-      'Insight temporal - implementar llamada a OpenAI',
-      'Insight temporal - implementar llamada a OpenAI'
-    ],
-    recommended_actions: [
-      'Acción temporal - implementar llamada a OpenAI',
-      'Acción temporal - implementar llamada a OpenAI',
-      'Acción temporal - implementar llamada a OpenAI'
-    ]
   }
 }
 

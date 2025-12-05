@@ -1,20 +1,31 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { signIn, user, loading: authLoading } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   })
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
   const [isLoading, setIsLoading] = useState(false)
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (!authLoading && user) {
+      const redirect = searchParams.get('redirect') || '/dashboard'
+      router.push(redirect)
+    }
+  }, [user, authLoading, router, searchParams])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -58,22 +69,18 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // TODO: Conectar con Supabase Auth o el sistema de autenticación elegido
-      // Ejemplo con Supabase:
-      // const { data, error } = await supabase.auth.signInWithPassword({
-      //   email: formData.email,
-      //   password: formData.password,
-      // })
-      // if (error) throw error
+      const { error } = await signIn(formData.email, formData.password)
 
-      // Por ahora: permitir login con cualquier usuario y contraseña para desarrollo
-      // Simular llamada a API
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      if (error) {
+        setErrors({
+          email: 'Error al iniciar sesión. Verifica tus credenciales.',
+        })
+        return
+      }
 
-      console.log('Login exitoso (modo desarrollo):', { email: formData.email })
-      
-      // Redirigir al dashboard
-      router.push('/dashboard')
+      // Redirigir al dashboard o a la URL de redirect
+      const redirect = searchParams.get('redirect') || '/dashboard'
+      router.push(redirect)
     } catch (error) {
       console.error('Login error:', error)
       setErrors({
@@ -100,12 +107,6 @@ export default function LoginPage() {
         {/* Login Card */}
         <Card>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Mensaje informativo */}
-            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
-              <p className="text-sm text-primary-800 dark:text-primary-200">
-                <strong>Modo desarrollo:</strong> Puedes iniciar sesión con cualquier email y contraseña.
-              </p>
-            </div>
 
             {/* Email Input */}
             <Input

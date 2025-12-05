@@ -1,13 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/config/supabase'
-
-// TODO: Obtener account_id desde el token de autenticación en lugar de hardcodearlo
-// Para MVP, usar un account_id fijo (mismo que en /api/companies)
-// TODO: Extraer a constante compartida o helper común
-function getAccountIdForRequest(): string {
-  // TODO: Reemplazar con account_id real desde auth token
-  return '00000000-0000-0000-0000-000000000000'
-}
+import { getAccountId } from '@/lib/auth'
 
 // Tipo para la respuesta de Contact
 type ContactDTO = {
@@ -83,8 +76,17 @@ async function enrichContactsWithCompanyNames(
 // GET /api/contacts
 export async function GET(req: Request) {
   try {
+    // Obtener account_id del usuario autenticado
+    const accountId = await getAccountId()
+    
+    if (!accountId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const supabase = getSupabaseClient()
-    const accountId = getAccountIdForRequest()
 
     // Consultar contactos del account actual
     const { data, error } = await supabase
@@ -139,8 +141,17 @@ export async function POST(req: Request) {
       )
     }
 
+    // Obtener account_id del usuario autenticado
+    const accountId = await getAccountId()
+    
+    if (!accountId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const supabase = getSupabaseClient()
-    const accountId = getAccountIdForRequest()
 
     // Preparar datos para insertar
     const insertData: any = {

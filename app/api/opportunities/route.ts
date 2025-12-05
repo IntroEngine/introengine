@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/config/supabase'
-
-// TODO: Obtener account_id desde el token de autenticación en lugar de hardcodearlo
-// Para MVP, usar un account_id fijo
-const ACCOUNT_ID = '00000000-0000-0000-0000-000000000000' // TODO: REEMPLAZAR_POR_ACCOUNT_REAL desde auth
+import { getAccountId } from '@/lib/auth'
 
 // Helper para crear cliente de Supabase
 function getSupabaseClient() {
@@ -13,13 +10,23 @@ function getSupabaseClient() {
 // GET /api/opportunities
 export async function GET(req: Request) {
   try {
+    // Obtener account_id del usuario autenticado
+    const accountId = await getAccountId()
+    
+    if (!accountId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const supabase = getSupabaseClient()
 
     // Consultar oportunidades del account actual
     const { data: opportunities, error } = await supabase
       .from('opportunities')
       .select('id, company_id, type, status, lead_potential_score, bridge_contact_id')
-      .eq('account_id', ACCOUNT_ID)
+      .eq('account_id', accountId)
       .order('lead_potential_score', { ascending: false, nullsFirst: false })
 
     if (error) {

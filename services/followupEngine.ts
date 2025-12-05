@@ -386,82 +386,20 @@ async function buildFollowUpContext(
 /**
  * Llama a OpenAI para generar mensaje de follow-up
  * 
- * TODO: Importar prompt desde services/ai/prompts cuando esté disponible
+ * Usa el helper de OpenAI desde services/ai/openai-helper
  */
 async function callFollowUpEngineAI(
   context: FollowUpContext
 ): Promise<FollowUpAIResponse> {
-  // TODO: Implementar llamada real a OpenAI
-  // Ejemplo de implementación esperada:
-  
-  /*
-  import OpenAI from 'openai'
-  import { FOLLOWUP_ENGINE_SYSTEM_PROMPT, buildFollowUpEngineUserPrompt } from './ai/prompts'
-  
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-  })
-  
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY not configured')
-  }
-  
   try {
-    const userPrompt = buildFollowUpEngineUserPrompt(context)
+    // Importar y usar el helper real de OpenAI
+    const { callFollowUpEngineAI as callOpenAI } = await import('./ai/openai-helper')
     
-    const response = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
-      messages: [
-        { role: 'system', content: FOLLOWUP_ENGINE_SYSTEM_PROMPT },
-        { role: 'user', content: userPrompt }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-      max_tokens: 1500
-    })
-    
-    const content = response.choices[0]?.message?.content
-    if (!content) {
-      throw new Error('No response content from OpenAI')
-    }
-    
-    const parsed = JSON.parse(content)
-    
-    // Validar estructura
-    if (!parsed.followups || typeof parsed.followups !== 'object') {
-      throw new Error('Invalid response format: followups missing')
-    }
-    
-    const requiredTypes = ['bridge_contact', 'prospect', 'outbound']
-    for (const type of requiredTypes) {
-      if (!parsed.followups[type] || typeof parsed.followups[type] !== 'string') {
-        throw new Error(`Invalid response format: missing or invalid ${type}`)
-      }
-    }
-    
-    return parsed as FollowUpAIResponse
+    // El contexto ya está en el formato correcto
+    return await callOpenAI(context)
   } catch (error) {
-    console.error('OpenAI API error:', error)
+    console.error('Error calling OpenAI for follow-up generation:', error)
     throw error
-  }
-  */
-  
-  // Implementación temporal (debe ser reemplazada)
-  console.warn('TODO: Implementar llamada real a OpenAI')
-  console.log('Follow-up context received:', {
-    opportunity_id: context.opportunity?.id,
-    followup_type: context.followup_type,
-    days_without_activity: context.days_without_activity,
-    company: context.company?.name
-  })
-  
-  // Retornar estructura temporal
-  return {
-    followups: {
-      bridge_contact: '',
-      prospect: '',
-      outbound: ''
-    }
   }
 }
 

@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/config/supabase'
-
-// TODO: Obtener account_id desde el token de autenticación en lugar de hardcodearlo
-// Para MVP, usar un account_id fijo (mismo que en otros endpoints)
-const ACCOUNT_ID = '00000000-0000-0000-0000-000000000000' // TODO: Reemplazar con account_id real desde auth
+import { getAccountId } from '@/lib/auth'
 
 // Tipo esperado para el payload de followup_suggested
 type FollowupPayload = {
@@ -55,13 +52,23 @@ function parseFollowupPayload(payload: any): FollowupPayload {
 // GET /api/actions
 export async function GET(req: Request) {
   try {
+    // Obtener account_id del usuario autenticado
+    const accountId = await getAccountId()
+    
+    if (!accountId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const supabase = getSupabaseClient()
 
     // Consultar activity_logs con action_type = 'followup_suggested'
     const { data: activityLogs, error } = await supabase
       .from('activity_logs')
       .select('id, opportunity_id, payload, created_at')
-      .eq('account_id', ACCOUNT_ID)
+      .eq('account_id', accountId)
       .eq('action_type', 'followup_suggested')
       .order('created_at', { ascending: false })
 

@@ -62,22 +62,16 @@ async function getActiveAccounts(): Promise<AccountRecord[]> {
 }
 
 /**
- * Enriquece datos de una cuenta
- * 
- * TODO: Implementar enrichmentService.enrichAccountData(accountId)
+ * Enriquece datos de una cuenta y detecta buying signals
  */
 async function enrichAccountData(accountId: string): Promise<void> {
-  // TODO: Importar y llamar a enrichmentService
-  // import { enrichmentService } from '@/services/enrichmentService'
-  // await enrichmentService.enrichAccountData(accountId)
+  // 1. Enriquecer empresas y contactos
+  const { enrichAccountData } = await import('@/services/enrichmentService')
+  await enrichAccountData(accountId, { companiesLimit: 50, contactsLimit: 50 })
   
-  // Placeholder: simular trabajo
-  console.log(`[Cron Enrich] Enriching data for account ${accountId}...`)
-  
-  // Simular delay
-  await new Promise(resolve => setTimeout(resolve, 100))
-  
-  console.log(`[Cron Enrich] Enrichment completed for account ${accountId}`)
+  // 2. Detectar buying signals para empresas enriquecidas
+  const { detectSignalsForAccount } = await import('@/services/buyingSignalsService')
+  await detectSignalsForAccount(accountId, { onlyEnriched: true, limit: 50 })
 }
 
 // ============================================================================
@@ -88,11 +82,14 @@ export async function GET(req: Request): Promise<Response> {
   const startTime = Date.now()
   console.log('[Cron Enrich] Starting enrichment cronjob...')
   
-  // TODO: Validar token de autorización si es necesario
-  // const authHeader = req.headers.get('authorization')
-  // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-  //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  // }
+  // Validar token de autorización si CRON_SECRET está configurado
+  const cronSecret = process.env.CRON_SECRET
+  if (cronSecret) {
+    const authHeader = req.headers.get('authorization')
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  }
   
   try {
     // 1. Obtener cuentas activas

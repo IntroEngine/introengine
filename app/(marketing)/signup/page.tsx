@@ -1,12 +1,16 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function SignupPage() {
+  const router = useRouter()
+  const { signUp, user, loading: authLoading } = useAuth()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -16,6 +20,14 @@ export default function SignupPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push('/dashboard')
+    }
+  }, [user, authLoading, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -70,31 +82,28 @@ export default function SignupPage() {
     }
 
     setIsLoading(true)
+    setSuccess(false)
 
     try {
-      // TODO: Conectar con Supabase Auth o el sistema de autenticación elegido
-      // Ejemplo con Supabase:
-      // const { data, error } = await supabase.auth.signUp({
-      //   email: formData.email,
-      //   password: formData.password,
-      //   options: {
-      //     data: {
-      //       name: formData.name,
-      //       company: formData.company,
-      //     }
-      //   }
-      // })
-      // if (error) throw error
+      const { error } = await signUp(
+        formData.email,
+        formData.password,
+        formData.name,
+        formData.company
+      )
 
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (error) {
+        setErrors({
+          email: error.message || 'Error al crear la cuenta. Intenta nuevamente.',
+        })
+        return
+      }
 
-      console.log('Signup attempt:', {
-        name: formData.name,
-        email: formData.email,
-        company: formData.company,
-      })
-
-      alert('TODO: Conectar con Supabase Auth. Por ahora solo se registra en consola.')
+      setSuccess(true)
+      // Redirigir al dashboard después de un breve delay
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 1500)
     } catch (error) {
       console.error('Signup error:', error)
       setErrors({
@@ -121,13 +130,14 @@ export default function SignupPage() {
         {/* Signup Card */}
         <Card>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Mensaje informativo */}
-            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
-              <p className="text-sm text-primary-800 dark:text-primary-200">
-                <strong>Nota:</strong> Por ahora solo soportamos acceso para cuentas invitadas.
-                Este formulario es un placeholder.
-              </p>
-            </div>
+            {/* Mensaje de éxito */}
+            {success && (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <p className="text-sm text-green-800 dark:text-green-200">
+                  <strong>¡Cuenta creada exitosamente!</strong> Redirigiendo al dashboard...
+                </p>
+              </div>
+            )}
 
             {/* Name Input */}
             <Input

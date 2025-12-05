@@ -219,29 +219,37 @@ async function getContact(accountId: string, contactId: string): Promise<Contact
 }
 
 /**
- * Obtiene señales de compra para una empresa
- * 
- * TODO: Implementar lectura desde tabla buying_signals cuando esté disponible
+ * Obtiene señales de compra para una empresa desde la tabla buying_signals
  */
 async function getBuyingSignalsForCompany(
   accountId: string,
   companyId: string
 ): Promise<BuyingSignals> {
-  // TODO: Leer desde tabla buying_signals
-  // Por ahora, retornar señales por defecto (todas en false)
-  
   try {
-    // Placeholder: en el futuro leer desde tabla buying_signals
-    // const supabase = getSupabaseClient()
-    // const { data } = await supabase
-    //   .from('buying_signals')
-    //   .select('*')
-    //   .eq('account_id', accountId)
-    //   .eq('company_id', companyId)
-    //   .eq('status', 'active')
+    const supabase = getSupabaseClient()
     
-    // Por ahora, retornar señales vacías
-    return {
+    const { data, error } = await supabase
+      .from('buying_signals')
+      .select('signal_type, confidence')
+      .eq('account_id', accountId)
+      .eq('company_id', companyId)
+      .eq('status', 'active')
+    
+    if (error) {
+      console.error(`Error fetching buying signals for company ${companyId}:`, error)
+      return {
+        hiring: false,
+        growth: false,
+        operational_chaos: false,
+        hr_shortage: false,
+        expansion: false,
+        compliance_issues: false,
+        manual_processes: false
+      }
+    }
+    
+    // Inicializar todas las señales en false
+    const signals: BuyingSignals = {
       hiring: false,
       growth: false,
       operational_chaos: false,
@@ -250,6 +258,20 @@ async function getBuyingSignalsForCompany(
       compliance_issues: false,
       manual_processes: false
     }
+    
+    // Mapear señales activas (solo considerar si confidence >= 30)
+    if (data) {
+      for (const signal of data) {
+        if (signal.confidence >= 30) {
+          const signalType = signal.signal_type as keyof BuyingSignals
+          if (signalType in signals) {
+            signals[signalType] = true
+          }
+        }
+      }
+    }
+    
+    return signals
   } catch (error) {
     console.error(`Exception fetching buying signals for company ${companyId}:`, error)
     return {
@@ -343,88 +365,29 @@ async function buildScoringContext(
 /**
  * Llama a OpenAI para calcular scores
  * 
- * TODO: Importar prompt desde services/ai/prompts cuando esté disponible
+ * Usa el helper de OpenAI desde services/ai/openai-helper
  */
 async function callScoringEngineAI(
   context: ScoringContext
 ): Promise<ScoringAIResponse> {
-  // TODO: Implementar llamada real a OpenAI
-  // Ejemplo de implementación esperada:
-  
-  /*
-  import OpenAI from 'openai'
-  import { SCORING_ENGINE_SYSTEM_PROMPT, buildScoringEngineUserPrompt } from './ai/prompts'
-  
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-  })
-  
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY not configured')
-  }
-  
   try {
-    const userPrompt = buildScoringEngineUserPrompt(context)
+    // Importar y usar el helper real de OpenAI
+    const { callScoringEngineAI as callOpenAI } = await import('./ai/openai-helper')
     
-    const response = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
-      messages: [
-        { role: 'system', content: SCORING_ENGINE_SYSTEM_PROMPT },
-        { role: 'user', content: userPrompt }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.2, // Baja temperatura para scores más consistentes
-      max_tokens: 1000
-    })
-    
-    const content = response.choices[0]?.message?.content
-    if (!content) {
-      throw new Error('No response content from OpenAI')
+    // Convertir el contexto local al formato esperado por el helper
+    const helperContext = {
+      company: context.company,
+      opportunity: context.opportunity,
+      target_contact: context.target_contact,
+      bridge_contact: context.bridge_contact,
+      relationship: context.relationship,
+      buying_signals: context.buying_signals
     }
     
-    const parsed = JSON.parse(content)
-    
-    // Validar estructura
-    if (!parsed.scores || typeof parsed.scores !== 'object') {
-      throw new Error('Invalid response format: scores missing')
-    }
-    
-    // Validar que todos los scores estén en rango 0-100
-    const scores = parsed.scores
-    const requiredScores = ['industry_fit_score', 'buying_signal_score', 'intro_strength_score', 'lead_potential_score']
-    
-    for (const scoreName of requiredScores) {
-      if (typeof scores[scoreName] !== 'number' || scores[scoreName] < 0 || scores[scoreName] > 100) {
-        throw new Error(`Invalid ${scoreName}: must be number between 0-100`)
-      }
-    }
-    
-    return parsed as ScoringAIResponse
+    return await callOpenAI(helperContext)
   } catch (error) {
-    console.error('OpenAI API error:', error)
+    console.error('Error calling OpenAI for scoring:', error)
     throw error
-  }
-  */
-  
-  // Implementación temporal (debe ser reemplazada)
-  console.warn('TODO: Implementar llamada real a OpenAI')
-  console.log('Scoring context received:', {
-    company: context.company?.name,
-    opportunity_type: context.opportunity?.type,
-    has_target: !!context.target_contact,
-    has_bridge: !!context.bridge_contact,
-    relationship_type: context.relationship?.type
-  })
-  
-  // Retornar scores temporales (deben ser calculados por IA)
-  return {
-    scores: {
-      industry_fit_score: 50,
-      buying_signal_score: 50,
-      intro_strength_score: 50,
-      lead_potential_score: 50
-    },
-    explanation: 'Scores temporales - implementar llamada a OpenAI'
   }
 }
 

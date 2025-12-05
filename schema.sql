@@ -371,7 +371,9 @@ CREATE TABLE IF NOT EXISTS public.activity_logs (
         'enrichment_completed',
         'weekly_summary_generated',
         'settings_updated',
-        'system_automated'
+        'system_automated',
+        'buying_signal_detected',
+        'followup_suggested'
     )),
     payload JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -485,6 +487,67 @@ SELECT
     comp.status AS company_status
 FROM public.contacts c
 LEFT JOIN public.companies comp ON c.company_id = comp.id;
+
+-- ============================================================================
+-- TABLA: buying_signals
+-- Propósito: Señales de compra detectadas para empresas (hiring, growth, etc.)
+-- Multi-tenant: Vinculado a accounts mediante account_id
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.buying_signals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
+    company_id UUID NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+    signal_type TEXT NOT NULL CHECK (signal_type IN (
+        'hiring',
+        'growth',
+        'operational_chaos',
+        'hr_shortage',
+        'expansion',
+        'compliance_issues',
+        'manual_processes'
+    )),
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'resolved', 'dismissed')),
+    confidence INTEGER DEFAULT 50 CHECK (confidence >= 0 AND confidence <= 100),
+    source TEXT DEFAULT 'system' CHECK (source IN ('system', 'manual', 'api', 'enrichment')),
+    detected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    resolved_at TIMESTAMP WITH TIME ZONE,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    -- Constraint para evitar señales duplicadas activas
+    CONSTRAINT unique_active_signal UNIQUE (company_id, signal_type, status) 
+        WHERE status = 'active'
+);
+
+-- Índice para búsquedas por account_id (multi-tenant)
+CREATE INDEX idx_buying_signals_account_id ON public.buying_signals(account_id);
+
+-- Índice para búsquedas por company_id (señales de una empresa)
+CREATE INDEX idx_buying_signals_company_id ON public.buying_signals(company_id);
+
+-- Índice para búsquedas por signal_type (filtrar tipos de señales)
+CREATE INDEX idx_buying_signals_signal_type ON public.buying_signals(account_id, signal_type);
+
+-- Índice para búsquedas por status (filtrar activas vs resueltas)
+CREATE INDEX idx_buying_signals_status ON public.buying_signals(account_id, status) WHERE status = 'active';
+
+-- Índice para ordenar por confianza (señales más confiables primero)
+CREATE INDEX idx_buying_signals_confidence ON public.buying_signals(account_id, confidence DESC) WHERE status = 'active';
+
+-- Índice compuesto para búsquedas comunes (empresa + tipo + estado)
+CREATE INDEX idx_buying_signals_company_type_status ON public.buying_signals(company_id, signal_type, status);
+
+-- Trigger para updated_at
+CREATE TRIGGER trigger_buying_signals_updated_at
+    BEFORE UPDATE ON public.buying_signals
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS (Row Level Security) - Comentado para implementación futura
+-- ALTER TABLE public.buying_signals ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY "Users can only see buying signals in their account" ON public.buying_signals
+--     FOR SELECT USING (account_id IN (SELECT account_id FROM public.users WHERE id = auth.uid()));
 
 -- ============================================================================
 -- COMENTARIOS FINALES

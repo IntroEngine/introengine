@@ -70,11 +70,14 @@ export async function GET(req: Request): Promise<Response> {
   const startTime = Date.now()
   console.log('[Cron Weekly Advisor] Starting weekly advisor cronjob...')
   
-  // TODO: Validar token de autorización si es necesario
-  // const authHeader = req.headers.get('authorization')
-  // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-  //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  // }
+  // Validar token de autorización si CRON_SECRET está configurado
+  const cronSecret = process.env.CRON_SECRET
+  if (cronSecret) {
+    const authHeader = req.headers.get('authorization')
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  }
   
   try {
     // 1. Obtener cuentas activas
