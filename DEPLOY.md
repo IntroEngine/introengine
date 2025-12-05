@@ -63,7 +63,9 @@ Los cronjobs están configurados en `vercel.json` y se ejecutarán automáticame
 - **Enriquecimiento**: Diario a las 2:00 AM UTC
 - **Oportunidades**: Diario a las 6:00 AM UTC  
 - **Resumen Semanal**: Lunes a las 8:00 AM UTC
-- **HubSpot Sync**: Cada 6 horas
+- **HubSpot Sync**: Diario a las 12:00 PM UTC
+
+**Nota**: El plan Hobby de Vercel solo permite cronjobs diarios. Si necesitas mayor frecuencia (ej: cada 6 horas), considera actualizar al plan Pro.
 
 Puedes verificar su ejecución en **Vercel Dashboard > Functions > Cron Jobs**
 
