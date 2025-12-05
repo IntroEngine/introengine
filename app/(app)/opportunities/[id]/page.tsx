@@ -60,7 +60,8 @@ Soy [Tu nombre] y trabajo en [Tu empresa]. Hemos estado ayudando a empresas como
 Saludos,`,
   }
 
-  const [estado, setEstado] = useState(opportunity.estado)
+  type EstadoType = 'suggested' | 'intro_requested' | 'in_progress' | 'won' | 'lost'
+  const [estado, setEstado] = useState<EstadoType>(opportunity.estado)
   const [copied, setCopied] = useState(false)
 
   if (!opportunity) {
@@ -112,7 +113,7 @@ Saludos,`,
   }
 
   const handleEstadoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newEstado = e.target.value
+    const newEstado = e.target.value as EstadoType
     setEstado(newEstado)
     
     // TODO: Conectar con API para actualizar estado
