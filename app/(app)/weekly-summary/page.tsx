@@ -190,12 +190,14 @@ export default function WeeklySummaryPage() {
                       size="sm"
                       onClick={() => {
                         // TODO: Navegar a oportunidades filtradas
-                        // router.push(`/opportunities?ids=${accion.oportunidades_relacionadas.join(',')}`)
-                        console.log('Ver oportunidades relacionadas:', accion.oportunidades_relacionadas)
-                        alert(`TODO: Ver ${accion.oportunidades_relacionadas.length} oportunidades relacionadas`)
+                        if (accion.oportunidades_relacionadas) {
+                          // router.push(`/opportunities?ids=${accion.oportunidades_relacionadas.join(',')}`)
+                          console.log('Ver oportunidades relacionadas:', accion.oportunidades_relacionadas)
+                          alert(`TODO: Ver ${accion.oportunidades_relacionadas.length} oportunidades relacionadas`)
+                        }
                       }}
                     >
-                      Ver oportunidades relacionadas ({accion.oportunidades_relacionadas.length})
+                      Ver oportunidades relacionadas ({accion.oportunidades_relacionadas?.length || 0})
                     </Button>
                   </div>
                 )}
