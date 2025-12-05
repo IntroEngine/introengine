@@ -176,8 +176,8 @@ export async function POST(req: Request) {
     // Por ahora, simular la generación o lanzar error si no está implementado
     try {
       // Intentar importar dinámicamente (fallará si no existe, pero no romperá el build)
-      const { weeklyAdvisorEngine } = await import('@/services/weeklyAdvisorEngine')
-      await weeklyAdvisorEngine.generateWeeklySummaryAndStore(accountId)
+      const { generateWeeklySummaryAndStore } = await import('@/services/weeklyAdvisorEngine')
+      await generateWeeklySummaryAndStore(accountId)
     } catch (importError) {
       // Si el servicio no existe, devolver error informativo
       console.warn('weeklyAdvisorEngine service not available:', importError)
