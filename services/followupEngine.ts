@@ -393,10 +393,10 @@ async function callFollowUpEngineAI(
 ): Promise<FollowUpAIResponse> {
   try {
     // Importar y usar el helper real de OpenAI
-    const { callFollowUpEngineAI as callOpenAI } = await import('./ai/openai-helper')
+    const { callFollowUpEngineAI } = await import('./ai/openai-helper')
     
     // El contexto ya está en el formato correcto
-    return await callOpenAI(context)
+    return await callFollowUpEngineAI(context)
   } catch (error) {
     console.error('Error calling OpenAI for follow-up generation:', error)
     throw error

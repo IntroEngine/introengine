@@ -389,7 +389,7 @@ async function callRelationshipEngineAI(
 ): Promise<IntroOpportunitiesAIResponse> {
   try {
     // Importar y usar el helper real de OpenAI
-    const { callRelationshipEngineAI as callOpenAI } = await import('./ai/openai-helper')
+    const { callRelationshipEngineAI } = await import('./ai/openai-helper')
     
     // Convertir el contexto local al formato esperado por el helper
     const helperContext = {
@@ -399,7 +399,7 @@ async function callRelationshipEngineAI(
       known_relationships: context.known_relationships
     }
     
-    return await callOpenAI(helperContext)
+    return await callRelationshipEngineAI(helperContext)
   } catch (error) {
     console.error('Error calling OpenAI for relationship analysis:', error)
     throw error

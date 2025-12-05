@@ -345,10 +345,10 @@ async function callOutboundEngineAI(
 ): Promise<OutboundAIResponse> {
   try {
     // Importar y usar el helper real de OpenAI
-    const { callOutboundEngineAI as callOpenAI } = await import('./ai/openai-helper')
+    const { callOutboundEngineAI } = await import('./ai/openai-helper')
     
     // El contexto ya está en el formato correcto
-    return await callOpenAI(context)
+    return await callOutboundEngineAI(context)
   } catch (error) {
     console.error('Error calling OpenAI for outbound generation:', error)
     throw error

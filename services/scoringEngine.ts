@@ -372,7 +372,7 @@ async function callScoringEngineAI(
 ): Promise<ScoringAIResponse> {
   try {
     // Importar y usar el helper real de OpenAI
-    const { callScoringEngineAI as callOpenAI } = await import('./ai/openai-helper')
+    const { callScoringEngineAI } = await import('./ai/openai-helper')
     
     // Convertir el contexto local al formato esperado por el helper
     const helperContext = {
@@ -384,7 +384,7 @@ async function callScoringEngineAI(
       buying_signals: context.buying_signals
     }
     
-    return await callOpenAI(helperContext)
+    return await callScoringEngineAI(helperContext)
   } catch (error) {
     console.error('Error calling OpenAI for scoring:', error)
     throw error

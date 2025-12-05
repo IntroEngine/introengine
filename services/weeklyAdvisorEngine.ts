@@ -393,10 +393,10 @@ async function callWeeklyAdvisorAI(
 ): Promise<WeeklyAdvisorAIResponse> {
   try {
     // Importar y usar el helper real de OpenAI
-    const { callWeeklyAdvisorAI as callOpenAI } = await import('./ai/openai-helper')
+    const { callWeeklyAdvisorAI } = await import('./ai/openai-helper')
     
     // Las métricas ya están en el formato correcto
-    return await callOpenAI(metrics)
+    return await callWeeklyAdvisorAI(metrics)
   } catch (error) {
     console.error('Error calling OpenAI for weekly advisor:', error)
     throw error
